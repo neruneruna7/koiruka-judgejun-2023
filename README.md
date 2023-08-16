@@ -1,4 +1,4 @@
-# Open Hack U 2023 コイルカ - usotsukey - 嘘判定
+# Open Hack U 2023 コイルカ - usotsukey - judgejun
 このリポジトリは、Open Hack U 2023 コイルカチームの usotsukey のリポジトリその2です。
 
 ## 利用技術
