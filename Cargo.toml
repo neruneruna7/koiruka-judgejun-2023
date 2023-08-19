@@ -2,5 +2,7 @@
 members = [
     "api/lib",
     "api/shuttle",
-    # "data_processing"
+    "data_processing",
+    "keitaiso",
+    "sandbox",
 ]

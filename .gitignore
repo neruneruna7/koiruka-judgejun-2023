@@ -1,2 +1,5 @@
 /target
 Secrets*.toml
+.env
+/data
+/dict

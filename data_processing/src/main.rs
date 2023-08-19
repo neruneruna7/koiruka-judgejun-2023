@@ -1,3 +1,13 @@
+// mod lib;
+
+// use lib::json_get_text;
+
+// use data_processing::json_get_text;
+
+
+
+
 fn main() {
-    println!("Hello, world!");
+    // json_get_text();
 }
+
