@@ -9,4 +9,4 @@ shuttle-actix-web = "0.23.0"
 shuttle-runtime = "0.23.0"
 tokio = "1.26.0"
 
-# api-lib = {path = "../lib"}
+api-lib = {path = "../lib"}
