@@ -2,13 +2,6 @@
 use std::fs::File;
 use vibrato::{Dictionary, Tokenizer};
 
-
-
-
-
-
-
-
 pub fn keitaiso(text: &str, dict_full_path: &str) {
     // 辞書ファイルのロード
     let reader = zstd::Decoder::new(File::open(dict_full_path).unwrap()).unwrap();

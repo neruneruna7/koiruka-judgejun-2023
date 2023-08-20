@@ -20,7 +20,6 @@ s    　馬鹿みたいに広い門の真下には、この大男のほかに全
     ";
 
     keitaiso(text, &dict_full_path);
-
 }
 
 fn keitaiso(text: &str, dict_full_path: &str) {
