@@ -20,10 +20,10 @@ fn main() -> LinderaResult<()> {
     // 結果を出力します。
     for token in tokens {
         println!(
-            "token: {:?}, start: {:?}, end: {:?}, details: {:?}",
+            "{}, {:?}",
             token.text,
-            token.byte_start,
-            token.byte_end,
+            // token.byte_start,
+            // token.byte_end,
             token.details
         );
     }
