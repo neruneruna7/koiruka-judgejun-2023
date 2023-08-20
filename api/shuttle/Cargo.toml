@@ -9,4 +9,9 @@ shuttle-actix-web = "0.23.0"
 shuttle-runtime = "0.23.0"
 tokio = "1.26.0"
 
-api-lib = {path = "../lib"}
+lindera-tokenizer = "*"
+lindera-dictionary = "*"
+lindera-core = "*"
+lindera-analyzer = { version = "0.27.0", features = ["ipadic", "ipadic-filter"] }
+
+# api-lib = {path = "../lib"}

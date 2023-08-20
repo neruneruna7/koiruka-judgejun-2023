@@ -281,7 +281,10 @@ name = "api-shuttle"
 version = "0.1.0"
 dependencies = [
  "actix-web",
- "api-lib",
+ "lindera-analyzer",
+ "lindera-core",
+ "lindera-dictionary",
+ "lindera-tokenizer",
  "shuttle-actix-web",
  "shuttle-runtime",
  "tokio",

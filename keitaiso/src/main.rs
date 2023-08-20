@@ -22,8 +22,6 @@ fn main() -> LinderaResult<()> {
         println!(
             "{}, {:?}",
             token.text,
-            // token.byte_start,
-            // token.byte_end,
             token.details
         );
     }
