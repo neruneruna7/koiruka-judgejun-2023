@@ -20,7 +20,7 @@ pub async fn chatgpt_request(prompt: &str) -> Result<String> {
     let response = client.send_message(prompt).await?;
 
     let end = start.elapsed();
-    println!("{}.{:03}秒", end.as_secs(), end.subsec_nanos() / 1_000_000);
+    println!("{}.{:03}秒", end.as_secs(), end.subsec_millis());
 
     Ok(response.message().content.to_owned())
 }

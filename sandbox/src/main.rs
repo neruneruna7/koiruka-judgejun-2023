@@ -41,7 +41,7 @@ async fn main() -> Result<()> {
     let response = client.send_message(fake_chack_request).await?;
 
     let end = start.elapsed();
-    println!("{}.{:03}秒", end.as_secs(), end.subsec_nanos() / 1_000_000);
+    println!("{}.{:03}秒", end.as_secs(), end.subsec_millis());
 
     println!("Response: {}", response.message().content);
 
