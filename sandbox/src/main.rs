@@ -5,7 +5,7 @@ use std::env;
 use std::time::Instant;
 
 #[tokio::main]
-async fn main() -> Result<()>{
+async fn main() -> Result<()> {
     dotenv().ok();
 
     // chatGPTのAPIkeyを.envから取得
@@ -24,7 +24,7 @@ async fn main() -> Result<()>{
 
     タスク：検証するコンテンツについて以下のプロセスに従って噓かどうかの判定を行ってください．結果は以下のようにしてコードブロック内に表示してください
     ```
-    {{judge_possible_science: bool,judge_possible_logic: bool, true_percent: int}}
+    {{judge_possible_science: bool,judge_possible_logic: bool, true_percent: int, description: string}}
     ```
     プロセス：
     1. 検証するコンテンツが一般的な知識として事実であるかどうかを判断してください．一般的な事実でない場合は嘘の可能性が高いです．
@@ -38,9 +38,7 @@ async fn main() -> Result<()>{
     // レスポンスが返ってくるまでの時間を計測する
     let start = Instant::now();
 
-    let response = client
-        .send_message(fake_chack_request)
-        .await?;
+    let response = client.send_message(fake_chack_request).await?;
 
     let end = start.elapsed();
     println!("{}.{:03}秒", end.as_secs(), end.subsec_nanos() / 1_000_000);
