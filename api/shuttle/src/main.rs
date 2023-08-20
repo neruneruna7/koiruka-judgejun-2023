@@ -75,7 +75,7 @@ async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send +
     // chatGPTのAPIkeyを.envから取得
     let key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
     let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
-    let _sercret_keys_data = web::Data::new(SecretKeys { my_app_key });
+    let sercret_keys_data = web::Data::new(SecretKeys { my_app_key });
 
     // chatGPTのAPIkeyを設定
     let mut client = ChatGPT::new(key).unwrap();
@@ -86,9 +86,11 @@ async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send +
     let config = move |cfg: &mut ServiceConfig| {
         cfg.app_data(analyzer_data.clone());
         cfg.app_data(client_data.clone());
+        cfg.app_data(sercret_keys_data.clone());
         cfg.service(hello_world);
         cfg.service(health);
         cfg.service(tokenize);
+        cfg.service(liejudge_chatgpt::lie_judge_gpt);
     };
 
     Ok(config.into())
