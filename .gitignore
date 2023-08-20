@@ -3,3 +3,4 @@ Secrets*.toml
 .env
 /data
 /dict
+*.http
