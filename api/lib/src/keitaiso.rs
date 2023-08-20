@@ -2,8 +2,10 @@
 use std::fs::File;
 use vibrato::{Dictionary, Tokenizer};
 
-pub fn keitaiso(text: &str, dict_full_path: &str) {
+pub fn keitaiso(text: &str, dict_full_path: &str) -> Vec<String> {
     // 辞書ファイルのロード
+
+    println!("形態素解析 処理を受領");
     let reader = zstd::Decoder::new(File::open(dict_full_path).unwrap()).unwrap();
 
     let dict = Dictionary::read(reader).unwrap();
@@ -23,6 +25,10 @@ pub fn keitaiso(text: &str, dict_full_path: &str) {
 
     println!("num_tokens: {}", worker.num_tokens());
 
+    let mut result = Vec::new();
+
+    println!("形態素解析 処理を開始");
+
     // 抽出したトークンをループで表示する
     worker
         .token_iter()
@@ -34,6 +40,9 @@ pub fn keitaiso(text: &str, dict_full_path: &str) {
         // })
         .for_each(|t| {
             // 出力
-            println!("{}: {}", t.surface(), t.feature());
+            result.push(format!("{}: {}", t.surface(), t.feature()));
+            // println!("{}: {}", t.surface(), t.feature());
         });
+    
+    result
 }
