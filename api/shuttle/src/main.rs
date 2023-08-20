@@ -48,13 +48,13 @@ pub struct SecretKeys {
 }
 
 #[derive(Debug, serde::Deserialize)]
-struct fake_check_request {
+struct FakeCheckRequest {
     my_app_key: String,
     content: String,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct fake_check_response {
+struct FakeCheckResponse {
     judge_possible_science: bool,
     judge_possible_logic: bool,
     true_percent: i32,
