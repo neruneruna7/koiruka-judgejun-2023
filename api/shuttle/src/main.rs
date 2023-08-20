@@ -1,18 +1,26 @@
 use actix_web::Responder;
-use actix_web::{get, web, web::ServiceConfig};
+use actix_web::{get,post, web, web::ServiceConfig};
 use lindera_analyzer::analyzer::Analyzer;
 use shuttle_actix_web::ShuttleActixWeb;
 
 use std::path::PathBuf;
 use std::fs;
-// mod endpoints;
 
-const HOME_DIR: &str = "dict";
-// let dict_path = "ipadic-mecab-2_7_0/system.dic.zst";
-// let dict_folder_path = "bccwj-suw+unidic-cwj-3_1_1";
-const DICT_FOLDER_PATH: &str = "bccwj-suw+unidic-cwj-3_1_1-extracted+compact";
+use serde::{Deserialize, Serialize};
+use chatgpt::prelude::*;
+use dotenvy::dotenv;
+use std::env;
+use std::time::Instant;
 
-const DICT_FILE_PATH: &str = "system.dic.zst";
+mod liejudge_chatgpt;
+
+// const HOME_DIR: &str = "dict";
+// // let dict_path = "ipadic-mecab-2_7_0/system.dic.zst";
+// // let dict_folder_path = "bccwj-suw+unidic-cwj-3_1_1";
+// const DICT_FOLDER_PATH: &str = "bccwj-suw+unidic-cwj-3_1_1-extracted+compact";
+
+// const DICT_FILE_PATH: &str = "system.dic.zst";
+
 
 
 #[get("/")]
@@ -24,23 +32,6 @@ async fn hello_world() -> &'static str {
 async fn health() -> &'static str {
     "OK"
 }
-
-// #[get("/keitaiso")]
-// async fn keitaiso() -> String {
-//     let dict_full_path = format!("{}/{}/{}", HOME_DIR, DICT_FOLDER_PATH, DICT_FILE_PATH);
-//     // URLからtextを取得
-//     let text = "ある日の超暮方(ほぼ夜)の事である。一人の下人が、クソデカい羅生門の完全な真下で雨やみを気持ち悪いほどずっと待ちまくっていた。";
-//     let result_txt = api_lib::keitaiso::keitaiso(text, &dict_full_path);
-
-//     // Stringベクタを１つの文字列にする
-
-//     let text = result_txt.join("\n");
-
-//     println!("{}", &text);
-
-//     // String型を&'static strに変換
-//     text
-// }
 
 #[get("/tokenize/{text}")]
 async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> impl Responder {
@@ -58,15 +49,55 @@ async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> imp
     result_txt
 }
 
+
+pub struct SecretKeys {
+    my_app_key: String,
+}
+
+#[derive( Debug,serde::Deserialize)]
+struct fake_check_request{
+    my_app_key: String,
+    content: String,
+}
+
+#[derive( Debug, Serialize, Deserialize)]
+struct fake_check_response{
+    judge_possible_science: bool,
+    judge_possible_logic: bool,
+    true_percent: i32,
+    description: String,
+}
+
+
 #[shuttle_runtime::main]
 async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+    // 形態素解析用の設定
     let path = PathBuf::from("lindera_ipadic_conf.json");
     let config_bytes = fs::read(path)?;
     let analyzer = Analyzer::from_slice(&config_bytes).unwrap();
     let analyzer_data = web::Data::new(analyzer);
 
+    // ChatGPTの設定
+    dotenv().ok();
+
+    // chatGPTのAPIkeyを.envから取得
+    let key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
+    let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
+    let sercret_keys_data = web::Data::new(SecretKeys{
+        my_app_key: my_app_key,
+    });
+
+
+    // chatGPTのAPIkeyを設定
+    let mut client = ChatGPT::new(key).unwrap();
+    client.config.engine = chatgpt::config::ChatGPTEngine::Gpt35Turbo;
+
+    let mut client_data = web::Data::new(client);
+
+
     let config = move |cfg: &mut ServiceConfig| {
         cfg.app_data(analyzer_data.clone());
+        cfg.app_data(client_data.clone());
         cfg.service(hello_world);
         cfg.service(health);
         cfg.service(tokenize);

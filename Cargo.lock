@@ -281,10 +281,14 @@ name = "api-shuttle"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "chatgpt_rs",
+ "dotenvy",
  "lindera-analyzer",
  "lindera-core",
  "lindera-dictionary",
  "lindera-tokenizer",
+ "serde",
+ "serde_json",
  "shuttle-actix-web",
  "shuttle-runtime",
  "tokio",
