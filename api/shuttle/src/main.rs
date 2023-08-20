@@ -1,16 +1,15 @@
 use actix_web::Responder;
-use actix_web::{get,post, web, web::ServiceConfig};
+use actix_web::{get, web, web::ServiceConfig};
 use lindera_analyzer::analyzer::Analyzer;
 use shuttle_actix_web::ShuttleActixWeb;
 
-use std::path::PathBuf;
 use std::fs;
+use std::path::PathBuf;
 
-use serde::{Deserialize, Serialize};
 use chatgpt::prelude::*;
 use dotenvy::dotenv;
+use serde::{Deserialize, Serialize};
 use std::env;
-use std::time::Instant;
 
 mod liejudge_chatgpt;
 
@@ -20,8 +19,6 @@ mod liejudge_chatgpt;
 // const DICT_FOLDER_PATH: &str = "bccwj-suw+unidic-cwj-3_1_1-extracted+compact";
 
 // const DICT_FILE_PATH: &str = "system.dic.zst";
-
-
 
 #[get("/")]
 async fn hello_world() -> &'static str {
@@ -35,39 +32,34 @@ async fn health() -> &'static str {
 
 #[get("/tokenize/{text}")]
 async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> impl Responder {
-
     let tokens = analyzer.analyze(&mut text.into_inner()).unwrap(); // 形態素解析を実行します
 
-    let result_txt = tokens.iter().map(|token| {
-        format!(
-            "{}, {:?}",
-            token.text,
-            token.details
-        )
-    }).collect::<Vec<String>>().join("\n");
+    let result_txt = tokens
+        .iter()
+        .map(|token| format!("{}, {:?}", token.text, token.details))
+        .collect::<Vec<String>>()
+        .join("\n");
 
     result_txt
 }
-
 
 pub struct SecretKeys {
     my_app_key: String,
 }
 
-#[derive( Debug,serde::Deserialize)]
-struct fake_check_request{
+#[derive(Debug, serde::Deserialize)]
+struct fake_check_request {
     my_app_key: String,
     content: String,
 }
 
-#[derive( Debug, Serialize, Deserialize)]
-struct fake_check_response{
+#[derive(Debug, Serialize, Deserialize)]
+struct fake_check_response {
     judge_possible_science: bool,
     judge_possible_logic: bool,
     true_percent: i32,
     description: String,
 }
-
 
 #[shuttle_runtime::main]
 async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
@@ -83,17 +75,13 @@ async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send +
     // chatGPTのAPIkeyを.envから取得
     let key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
     let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
-    let sercret_keys_data = web::Data::new(SecretKeys{
-        my_app_key: my_app_key,
-    });
-
+    let _sercret_keys_data = web::Data::new(SecretKeys { my_app_key });
 
     // chatGPTのAPIkeyを設定
     let mut client = ChatGPT::new(key).unwrap();
     client.config.engine = chatgpt::config::ChatGPTEngine::Gpt35Turbo;
 
-    let mut client_data = web::Data::new(client);
-
+    let client_data = web::Data::new(client);
 
     let config = move |cfg: &mut ServiceConfig| {
         cfg.app_data(analyzer_data.clone());

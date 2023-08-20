@@ -1,13 +1,11 @@
 use chatgpt::prelude::*;
-use dotenvy::dotenv;
-use std::env;
+
 use std::time::Instant;
 
+use super::{fake_check_request, fake_check_response, SecretKeys};
 
-use super::{SecretKeys, fake_check_request, fake_check_response};
-
-use actix_web::{Responder, HttpResponse};
-use actix_web::{get,post, web, web::ServiceConfig};
+use actix_web::{post, web};
+use actix_web::{HttpResponse, Responder};
 const PROMPT: &str = "
 検証するコンテンツ：{}
 
@@ -24,31 +22,25 @@ const PROMPT: &str = "
 6．収集した情報（エビデンス）をもとに検証するコンテンツの事象が科学的，論理的に正しいかを判断して，科学的判断が可能か難しいかをjudge_possible_science: boolで，論理的に判断が可能か難しいかをjudge_possible_logicでそれぞれtrue or falseで示したうえで，信憑性をtrue_percent: intで%表示してください．
 ";
 
-
-
-
 #[post("/chatgpt")]
 async fn lie_judge_gpt(
     client: web::Data<ChatGPT>,
     keys: web::Data<SecretKeys>,
     req: web::Json<fake_check_request>,
-) -> impl Responder{
+) -> impl Responder {
+    if req.my_app_key != keys.my_app_key {
+        return HttpResponse::Unauthorized().body("無効なリクエスト");
+    }
+    // レスポンスが返ってくるまでの時間を計測する
+    let start = Instant::now();
 
-        if req.my_app_key != keys.my_app_key {
-            return HttpResponse::Unauthorized().body("無効なリクエスト");
-        }
-        // レスポンスが返ってくるまでの時間を計測する
-        let start = Instant::now();
+    let response = client.send_message(&req.content).await.unwrap();
 
-        let response = client.send_message(&req.content).await.unwrap();
-    
-        let end = start.elapsed();
-        println!("{}.{:03}秒", end.as_secs(), end.subsec_millis());
+    let end = start.elapsed();
+    println!("{}.{:03}秒", end.as_secs(), end.subsec_millis());
 
+    // responseをjsonに変換
+    let res_json: fake_check_response = serde_json::from_str(&response.message().content).unwrap();
 
-        // responseをjsonに変換
-        let res_json: fake_check_response = serde_json::from_str(&response.message().content).unwrap();
-
-        HttpResponse::Ok().json(res_json)
-
+    HttpResponse::Ok().json(res_json)
 }

@@ -14,16 +14,12 @@ fn main() -> LinderaResult<()> {
 
 　馬鹿みたいに広い門の真下には、この大男のほかに全然誰もいない。ただ、所々丹塗のびっくりするくらい剥げた、信じられないほど大きな円柱に、象くらいある蟋蟀が一匹とまっている。クソデカ羅生門が、大河のように広い朱雀大路にある以上は、この狂った男のほかにも、激・雨やみをする巨大市女笠や爆裂揉烏帽子が、もう二三百人はありそうなものである。それが、この珍妙男のほかには全然誰もマジで全くいない。
     ".to_string();
-    
+
     let tokens = analyzer.analyze(&mut text)?; // 形態素解析を実行します
 
     // 結果を出力します。
     for token in tokens {
-        println!(
-            "{}, {:?}",
-            token.text,
-            token.details
-        );
+        println!("{}, {:?}", token.text, token.details);
     }
 
     Ok(())
