@@ -2,5 +2,6 @@
 Secrets*.toml
 .env
 /data
-/dict
-/static
+*.http
+api/shuttle/src/load_key.rs
+static/
