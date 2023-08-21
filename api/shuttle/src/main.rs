@@ -2,14 +2,14 @@ use std::path::PathBuf;
 
 use actix_web::{get, web, web::ServiceConfig};
 use actix_web::{post, HttpResponse, Responder};
-// use lindera_analyzer::analyzer::Analyzer;
+use lindera_analyzer::analyzer::Analyzer;
 use shuttle_actix_web::ShuttleActixWeb;
 
 use chatgpt::prelude::*;
 
 use serde::{Deserialize, Serialize};
 
-use std::env;
+use std::{env, fs};
 mod liejudge_chatgpt;
 
 // const HOME_DIR: &str = "dict";
@@ -54,18 +54,18 @@ async fn health() -> &'static str {
     "OK"
 }
 
-// #[get("/tokenize/{text}")]
-// async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> impl Responder {
-//     let tokens = analyzer.analyze(&mut text.into_inner()).unwrap(); // 形態素解析を実行します
+#[get("/tokenize/{text}")]
+async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> impl Responder {
+    let tokens = analyzer.analyze(&mut text.into_inner()).unwrap(); // 形態素解析を実行します
 
-//     let result_txt = tokens
-//         .iter()
-//         .map(|token| format!("{}, {:?}", token.text, token.details))
-//         .collect::<Vec<String>>()
-//         .join("\n");
+    let result_txt = tokens
+        .iter()
+        .map(|token| format!("{}, {:?}", token.text, token.details))
+        .collect::<Vec<String>>()
+        .join("\n");
 
-//     result_txt
-// }
+    result_txt
+}
 
 #[post("/fake_check")]
 async fn fake_check(
@@ -89,10 +89,11 @@ async fn actix_web(
     // #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
 ) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
     // 形態素解析用の設定
-    // let path = PathBuf::from("lindera_ipadic_conf.json");
-    // let config_bytes = fs::read(path)?;
-    // let analyzer = Analyzer::from_slice(&config_bytes).unwrap();
-    // let analyzer_data = web::Data::new(analyzer);
+    // let path = PathBuf::from(static_folder.join("lindera_ipadic_conf.json"));
+    let path = PathBuf::from("static/lindera_ipadic_conf.json");
+    let config_bytes = fs::read(path)?;
+    let analyzer = Analyzer::from_slice(&config_bytes).unwrap();
+    let analyzer_data = web::Data::new(analyzer);
 
     // ChatGPTの設定
 
@@ -118,13 +119,13 @@ async fn actix_web(
     let client_data = web::Data::new(client);
 
     let config = move |cfg: &mut ServiceConfig| {
-        // cfg.app_data(analyzer_data.clone());
-        cfg.app_data(client_data.clone());
-        cfg.app_data(sercret_keys_data.clone());
-        cfg.service(hello_world);
-        cfg.service(health);
-        // cfg.service(tokenize);
-        cfg.service(fake_check);
+        cfg.app_data(analyzer_data.clone())
+            .app_data(client_data.clone())
+            .app_data(sercret_keys_data.clone())
+            .service(hello_world)
+            .service(health)
+            .service(tokenize)
+            .service(fake_check);
     };
 
     Ok(config.into())
