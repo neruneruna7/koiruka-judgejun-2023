@@ -15,15 +15,10 @@ use std::fs::File;
 use std::io::Write;
 
 pub fn json_get_text(
-    _output_path: &str,
+    output_path: &str,
     json_data: serde_json::Value,
     select_colmun: &str,
 ) -> anyhow::Result<()> {
-    // println!("Hello, world!");
-    // // カレントディレクトリのパスを取得する
-    // let current_dir = std::env::current_dir().unwrap();
-    // println!("current_dir: {:?}", current_dir);
-
     let mut texts = Vec::<String>::new();
 
     json_data.as_array().unwrap().iter().for_each(|message| {
@@ -36,10 +31,12 @@ pub fn json_get_text(
         );
     });
 
-    let out_file_path = "data/texts1.csv";
-    // println!("{:?}", &texts);
+    // もしファイルが存在しないならファイル作成
+    if !std::path::Path::new(output_path).exists() {
+        File::create(output_path)?;
+    }
 
-    if let Err(err) = write_csv(texts, out_file_path) {
+    if let Err(err) = write_csv(texts, output_path) {
         eprintln!("Error writing CSV: {}", err);
     } else {
         println!("CSV file written successfully!");
