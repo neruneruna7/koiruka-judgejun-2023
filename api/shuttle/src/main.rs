@@ -10,9 +10,7 @@ use chatgpt::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use std::env;
-use dotenvy::dotenv;
 mod liejudge_chatgpt;
-mod load_key;
 
 // const HOME_DIR: &str = "dict";
 // // let dict_path = "ipadic-mecab-2_7_0/system.dic.zst";
@@ -23,8 +21,8 @@ mod load_key;
 
 #[derive(Debug, Clone)]
 pub struct SecretKeys {
-    chagpt_api_key: &'static str,
-    my_app_key: &'static str,
+    chagpt_api_key: String,
+    my_app_key: String,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -87,7 +85,8 @@ async fn fake_check(
 
 #[shuttle_runtime::main]
 async fn actix_web(
-    #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
+    // deploy時には有効にする
+    // #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
 ) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
     // 形態素解析用の設定
     // let path = PathBuf::from("lindera_ipadic_conf.json");
@@ -97,13 +96,19 @@ async fn actix_web(
 
     // ChatGPTの設定
 
-    dotenvy::from_path(static_folder.join(".env")).ok();
-    // dotenv().ok();
+    // dotenvy::from_path(static_folder.join(".env")).ok();
+    dotenvy::from_path("static/.env").ok();
+
 
     // chatGPTのAPIkeyを.envから取得
-    let key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
+    let gpt_key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
     let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
-    let secret_keys = load_key::keys();
+
+    let secret_keys = SecretKeys {
+        chagpt_api_key: gpt_key,
+        my_app_key: my_app_key,
+    };
+
     let sercret_keys_data = web::Data::new(secret_keys.clone());
 
     // chatGPTのAPIkeyを設定
