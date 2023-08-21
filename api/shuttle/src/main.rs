@@ -1,5 +1,6 @@
-use actix_web::Responder;
+use actix_web::web::to;
 use actix_web::{get, web, web::ServiceConfig};
+use actix_web::{HttpResponse, Responder, post};
 // use lindera_analyzer::analyzer::Analyzer;
 use shuttle_actix_web::ShuttleActixWeb;
 use shuttle_static_folder::StaticFolder;
@@ -21,6 +22,32 @@ mod load_key;
 // const DICT_FOLDER_PATH: &str = "bccwj-suw+unidic-cwj-3_1_1-extracted+compact";
 
 // const DICT_FILE_PATH: &str = "system.dic.zst";
+
+#[derive(Debug, Clone)]
+pub struct SecretKeys {
+    chagpt_api_key: &'static str,
+    my_app_key: &'static str,
+}
+
+#[derive(Debug, serde::Deserialize)]
+pub struct ChatGptRequest {
+    my_app_key: String,
+    content: String,
+}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct  ChatGptResponse {
+    judge_possible_science: bool,
+    judge_possible_logic: bool,
+    true_percent: i32,
+    description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct FakeCheckResponse {
+    chatgpt_response: ChatGptResponse,
+    other_params: Option<String>,
+}
+
 
 #[get("/")]
 async fn hello_world() -> &'static str {
@@ -45,25 +72,23 @@ async fn health() -> &'static str {
 //     result_txt
 // }
 
-#[derive(Debug, Clone)]
-pub struct SecretKeys {
-    chagpt_api_key: &'static str,
-    my_app_key: &'static str,
+#[post("/fake_check")]
+async fn fake_check(
+    client: web::Data<ChatGPT>,
+    keys: web::Data<SecretKeys>,
+    req: web::Json<ChatGptRequest>,
+) -> impl Responder{
+    let chatgpt_response = liejudge_chatgpt::lie_judge_gpt(client, keys, req).await;
+
+    let fake_check_response = FakeCheckResponse {
+        chatgpt_response: chatgpt_response.unwrap(),
+        other_params: None,
+    };
+
+    HttpResponse::Ok().json(fake_check_response)
 }
 
-#[derive(Debug, serde::Deserialize)]
-struct FakeCheckRequest {
-    my_app_key: String,
-    content: String,
-}
 
-#[derive(Debug, Serialize, Deserialize)]
-struct FakeCheckResponse {
-    judge_possible_science: bool,
-    judge_possible_logic: bool,
-    true_percent: i32,
-    description: String,
-}
 
 #[shuttle_runtime::main]
 async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
@@ -97,7 +122,7 @@ async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send +
         cfg.service(hello_world);
         cfg.service(health);
         // cfg.service(tokenize);
-        cfg.service(liejudge_chatgpt::lie_judge_gpt);
+        cfg.service(fake_check);
     };
 
     Ok(config.into())

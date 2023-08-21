@@ -2,19 +2,18 @@ use chatgpt::prelude::*;
 
 use std::time::Instant;
 
-use super::{FakeCheckRequest, FakeCheckResponse, SecretKeys};
+use super::{ChatGptRequest, ChatGptResponse, SecretKeys};
 
-use actix_web::{post, web};
-use actix_web::{HttpResponse, Responder};
+use actix_web::{web};
 
-#[post("/fake-check")]
-async fn lie_judge_gpt(
+
+pub async fn lie_judge_gpt(
     client: web::Data<ChatGPT>,
     keys: web::Data<SecretKeys>,
-    req: web::Json<FakeCheckRequest>,
-) -> impl Responder {
+    req: web::Json<ChatGptRequest>,
+) -> Result<ChatGptResponse> {
     if req.my_app_key != keys.my_app_key {
-        return HttpResponse::Unauthorized().body("無効なリクエスト");
+        return Err(chatgpt::err::Error::ParsingError("Invalid my_app_key".to_string()));
     }
     // レスポンスが返ってくるまでの時間を計測する
     let start = Instant::now();
@@ -42,9 +41,7 @@ async fn lie_judge_gpt(
     println!("{}", &response.message().content);
 
     // responseを構造体に変換
-    let res_json: FakeCheckResponse = parse_response(&response.message().content);
-
-    HttpResponse::Ok().json(res_json)
+    Ok(parse_response(&response.message().content))
 }
 
 // 独自の文字列パーサー
@@ -57,7 +54,7 @@ async fn lie_judge_gpt(
 //     true_percent: i32,
 //     description: String,
 // }
-fn parse_response(response: &str) -> FakeCheckResponse {
+fn parse_response(response: &str) -> ChatGptResponse {
     // 文字列中から, judge_possible_scienceの位置を探す
     let judge_possible_science_index = response.find("judge_possible_science:").unwrap();
     // 文字列中から, judge_possible_logicの位置を探す
@@ -95,7 +92,7 @@ fn parse_response(response: &str) -> FakeCheckResponse {
         .trim()
         .to_string();
 
-    FakeCheckResponse {
+        ChatGptResponse {
         judge_possible_science,
         judge_possible_logic,
         true_percent,

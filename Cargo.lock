@@ -305,6 +305,7 @@ version = "0.1.0"
 dependencies = [
  "actix-files",
  "actix-web",
+ "anyhow",
  "chatgpt_rs",
  "dotenvy",
  "serde",

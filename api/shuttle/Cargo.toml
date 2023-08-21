@@ -13,7 +13,7 @@ shuttle-static-folder = "*"
 tokio = "1.26.0"
 serde = "*"
 serde_json = "*"
-
+anyhow = "*"
 # lindera-tokenizer = "*"
 # lindera-dictionary = "*"
 # lindera-core = "*"
