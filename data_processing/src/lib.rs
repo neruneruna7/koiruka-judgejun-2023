@@ -1,4 +1,3 @@
-
 // {
 //     "index": "0",
 //     "message_tree_id": "6ab24d72-0181-4594-a9cd-deaf170242fb",
@@ -13,24 +12,27 @@
 // },
 
 use std::fs::File;
-use std::io::{Read, Write};
-use serde::{Deserialize, Serialize};
+use std::io::Write;
 
-pub fn json_get_text(output_path: &str, json_data: serde_json::Value, select_colmun: &str) -> anyhow::Result<()> {
+pub fn json_get_text(
+    _output_path: &str,
+    json_data: serde_json::Value,
+    select_colmun: &str,
+) -> anyhow::Result<()> {
     // println!("Hello, world!");
     // // カレントディレクトリのパスを取得する
     // let current_dir = std::env::current_dir().unwrap();
     // println!("current_dir: {:?}", current_dir);
-
 
     let mut texts = Vec::<String>::new();
 
     json_data.as_array().unwrap().iter().for_each(|message| {
         texts.push(
             message[select_colmun]
-            .clone()
-            .as_str().unwrap()
-            .replace("\n", "")
+                .clone()
+                .as_str()
+                .unwrap()
+                .replace('\n', ""),
         );
     });
 

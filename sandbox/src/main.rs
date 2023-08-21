@@ -5,7 +5,7 @@ use std::env;
 use std::time::Instant;
 
 #[tokio::main]
-async fn main() -> Result<()>{
+async fn main() -> Result<()> {
     dotenv().ok();
 
     // chatGPTのAPIkeyを.envから取得
@@ -38,12 +38,10 @@ async fn main() -> Result<()>{
     // レスポンスが返ってくるまでの時間を計測する
     let start = Instant::now();
 
-    let response = client
-        .send_message(fake_chack_request)
-        .await?;
+    let response = client.send_message(fake_chack_request).await?;
 
     let end = start.elapsed();
-    println!("{}.{:03}秒", end.as_secs(), end.subsec_nanos() / 1_000_000);
+    println!("{}.{:03}秒", end.as_secs(), end.subsec_millis());
 
     println!("Response: {}", response.message().content);
 
