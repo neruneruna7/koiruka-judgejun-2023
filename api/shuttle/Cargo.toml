@@ -5,13 +5,21 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4.3.1"
-shuttle-actix-web = "0.23.0"
-shuttle-runtime = "0.23.0"
-tokio = "1.26.0"
+shuttle-actix-web = "0.24.0" #作成時は0.23.0だった
+shuttle-runtime = "0.24.0" #作成時は0.23.0だった
+actix-files = "*"
+shuttle-static-folder = "*"
 
-lindera-tokenizer = "*"
-lindera-dictionary = "*"
-lindera-core = "*"
-lindera-analyzer = { version = "0.27.0", features = ["ipadic", "ipadic-filter"] }
+tokio = "1.26.0"
+serde = "*"
+serde_json = "*"
+anyhow = "*"
+# lindera-tokenizer = "*"
+# lindera-dictionary = "*"
+# lindera-core = "*"
+# lindera-analyzer = { version = "0.27.0", features = ["ipadic", "ipadic-filter"] }
+
+chatgpt_rs = "*"
+dotenvy = "*"
 
 # api-lib = {path = "../lib"}

@@ -28,8 +28,6 @@ struct Message {
 
 use serde::{Deserialize, Serialize};
 
-
-
 //
 
 // pub fn json_get_text<T: Deserialize>(output_path: &str, data:T) -> Result<(), Box<dyn std::error::Error>> {

@@ -43,6 +43,6 @@ pub fn keitaiso(text: &str, dict_full_path: &str) -> Vec<String> {
             result.push(format!("{}: {}", t.surface(), t.feature()));
             // println!("{}: {}", t.surface(), t.feature());
         });
-    
+
     result
 }
