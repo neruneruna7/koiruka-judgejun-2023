@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use actix_web::{get, web, web::ServiceConfig};
 use actix_web::{post, HttpResponse, Responder};
 // use lindera_analyzer::analyzer::Analyzer;
@@ -7,6 +9,8 @@ use chatgpt::prelude::*;
 
 use serde::{Deserialize, Serialize};
 
+use std::env;
+use dotenvy::dotenv;
 mod liejudge_chatgpt;
 mod load_key;
 
@@ -82,7 +86,9 @@ async fn fake_check(
 }
 
 #[shuttle_runtime::main]
-async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+async fn actix_web(
+    #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
+) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
     // 形態素解析用の設定
     // let path = PathBuf::from("lindera_ipadic_conf.json");
     // let config_bytes = fs::read(path)?;
@@ -90,11 +96,13 @@ async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send +
     // let analyzer_data = web::Data::new(analyzer);
 
     // ChatGPTの設定
+
+    dotenvy::from_path(static_folder.join(".env")).ok();
     // dotenv().ok();
 
     // chatGPTのAPIkeyを.envから取得
-    // let key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
-    // let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
+    let key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
+    let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
     let secret_keys = load_key::keys();
     let sercret_keys_data = web::Data::new(secret_keys.clone());
 

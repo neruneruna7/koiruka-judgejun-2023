@@ -5,3 +5,4 @@ Secrets*.toml
 /dict
 *.http
 api/shuttle/src/load_key.rs
+static/
