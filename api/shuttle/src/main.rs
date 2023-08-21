@@ -1,17 +1,11 @@
-use actix_web::web::to;
 use actix_web::{get, web, web::ServiceConfig};
-use actix_web::{HttpResponse, Responder, post};
+use actix_web::{post, HttpResponse, Responder};
 // use lindera_analyzer::analyzer::Analyzer;
 use shuttle_actix_web::ShuttleActixWeb;
-use shuttle_static_folder::StaticFolder;
-
-use std::fs;
-use std::path::PathBuf;
 
 use chatgpt::prelude::*;
-use dotenvy::dotenv;
+
 use serde::{Deserialize, Serialize};
-use std::env;
 
 mod liejudge_chatgpt;
 mod load_key;
@@ -35,7 +29,7 @@ pub struct ChatGptRequest {
     content: String,
 }
 #[derive(Debug, Serialize, Deserialize)]
-pub struct  ChatGptResponse {
+pub struct ChatGptResponse {
     judge_possible_science: bool,
     judge_possible_logic: bool,
     true_percent: i32,
@@ -47,7 +41,6 @@ struct FakeCheckResponse {
     chatgpt_response: ChatGptResponse,
     other_params: Option<String>,
 }
-
 
 #[get("/")]
 async fn hello_world() -> &'static str {
@@ -77,7 +70,7 @@ async fn fake_check(
     client: web::Data<ChatGPT>,
     keys: web::Data<SecretKeys>,
     req: web::Json<ChatGptRequest>,
-) -> impl Responder{
+) -> impl Responder {
     let chatgpt_response = liejudge_chatgpt::lie_judge_gpt(client, keys, req).await;
 
     let fake_check_response = FakeCheckResponse {
@@ -88,11 +81,8 @@ async fn fake_check(
     HttpResponse::Ok().json(fake_check_response)
 }
 
-
-
 #[shuttle_runtime::main]
 async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
-    
     // 形態素解析用の設定
     // let path = PathBuf::from("lindera_ipadic_conf.json");
     // let config_bytes = fs::read(path)?;
@@ -107,7 +97,6 @@ async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send +
     // let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
     let secret_keys = load_key::keys();
     let sercret_keys_data = web::Data::new(secret_keys.clone());
-
 
     // chatGPTのAPIkeyを設定
     let mut client = ChatGPT::new(secret_keys.chagpt_api_key).unwrap();

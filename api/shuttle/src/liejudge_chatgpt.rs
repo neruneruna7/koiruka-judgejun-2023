@@ -4,8 +4,7 @@ use std::time::Instant;
 
 use super::{ChatGptRequest, ChatGptResponse, SecretKeys};
 
-use actix_web::{web};
-
+use actix_web::web;
 
 pub async fn lie_judge_gpt(
     client: web::Data<ChatGPT>,
@@ -13,7 +12,9 @@ pub async fn lie_judge_gpt(
     req: web::Json<ChatGptRequest>,
 ) -> Result<ChatGptResponse> {
     if req.my_app_key != keys.my_app_key {
-        return Err(chatgpt::err::Error::ParsingError("Invalid my_app_key".to_string()));
+        return Err(chatgpt::err::Error::ParsingError(
+            "Invalid my_app_key".to_string(),
+        ));
     }
     // レスポンスが返ってくるまでの時間を計測する
     let start = Instant::now();
@@ -92,7 +93,7 @@ fn parse_response(response: &str) -> ChatGptResponse {
         .trim()
         .to_string();
 
-        ChatGptResponse {
+    ChatGptResponse {
         judge_possible_science,
         judge_possible_logic,
         true_percent,
