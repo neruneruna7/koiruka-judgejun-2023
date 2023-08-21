@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 chatgpt_rs = "*"
 dotenvy = "*"
+vibrato = "0.5.1"
+zstd = "0.12.4"

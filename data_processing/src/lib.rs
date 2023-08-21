@@ -26,12 +26,9 @@ struct Message {
     use_deepl: i64,
 }
 
-use std::fs::File;
-use std::io::{Read, Write};
 use serde::{Deserialize, Serialize};
 
-
-// 
+//
 
 // pub fn json_get_text<T: Deserialize>(output_path: &str, data:T) -> Result<(), Box<dyn std::error::Error>> {
 //     // println!("Hello, world!");
