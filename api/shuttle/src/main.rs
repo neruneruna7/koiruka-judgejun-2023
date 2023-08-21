@@ -119,13 +119,13 @@ async fn actix_web(
     let client_data = web::Data::new(client);
 
     let config = move |cfg: &mut ServiceConfig| {
-        cfg.app_data(analyzer_data.clone());
-        cfg.app_data(client_data.clone());
-        cfg.app_data(sercret_keys_data.clone());
-        cfg.service(hello_world);
-        cfg.service(health);
-        cfg.service(tokenize);
-        cfg.service(fake_check);
+        cfg.app_data(analyzer_data.clone())
+            .app_data(client_data.clone())
+            .app_data(sercret_keys_data.clone())
+            .service(hello_world)
+            .service(health)
+            .service(tokenize)
+            .service(fake_check);
     };
 
     Ok(config.into())
