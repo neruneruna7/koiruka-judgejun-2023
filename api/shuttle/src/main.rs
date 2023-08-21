@@ -1,7 +1,8 @@
 use actix_web::Responder;
 use actix_web::{get, web, web::ServiceConfig};
-use lindera_analyzer::analyzer::Analyzer;
+// use lindera_analyzer::analyzer::Analyzer;
 use shuttle_actix_web::ShuttleActixWeb;
+use shuttle_static_folder::StaticFolder;
 
 use std::fs;
 use std::path::PathBuf;
@@ -12,6 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::env;
 
 mod liejudge_chatgpt;
+mod load_key;
 
 // const HOME_DIR: &str = "dict";
 // // let dict_path = "ipadic-mecab-2_7_0/system.dic.zst";
@@ -30,21 +32,23 @@ async fn health() -> &'static str {
     "OK"
 }
 
-#[get("/tokenize/{text}")]
-async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> impl Responder {
-    let tokens = analyzer.analyze(&mut text.into_inner()).unwrap(); // 形態素解析を実行します
+// #[get("/tokenize/{text}")]
+// async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> impl Responder {
+//     let tokens = analyzer.analyze(&mut text.into_inner()).unwrap(); // 形態素解析を実行します
 
-    let result_txt = tokens
-        .iter()
-        .map(|token| format!("{}, {:?}", token.text, token.details))
-        .collect::<Vec<String>>()
-        .join("\n");
+//     let result_txt = tokens
+//         .iter()
+//         .map(|token| format!("{}, {:?}", token.text, token.details))
+//         .collect::<Vec<String>>()
+//         .join("\n");
 
-    result_txt
-}
+//     result_txt
+// }
 
+#[derive(Debug, Clone)]
 pub struct SecretKeys {
-    my_app_key: String,
+    chagpt_api_key: &'static str,
+    my_app_key: &'static str,
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -63,33 +67,36 @@ struct FakeCheckResponse {
 
 #[shuttle_runtime::main]
 async fn actix_web() -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+    
     // 形態素解析用の設定
-    let path = PathBuf::from("lindera_ipadic_conf.json");
-    let config_bytes = fs::read(path)?;
-    let analyzer = Analyzer::from_slice(&config_bytes).unwrap();
-    let analyzer_data = web::Data::new(analyzer);
+    // let path = PathBuf::from("lindera_ipadic_conf.json");
+    // let config_bytes = fs::read(path)?;
+    // let analyzer = Analyzer::from_slice(&config_bytes).unwrap();
+    // let analyzer_data = web::Data::new(analyzer);
 
     // ChatGPTの設定
-    dotenv().ok();
+    // dotenv().ok();
 
     // chatGPTのAPIkeyを.envから取得
-    let key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
-    let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
-    let sercret_keys_data = web::Data::new(SecretKeys { my_app_key });
+    // let key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
+    // let my_app_key = env::var("MY_APP_KEY").expect("MY_APP_KEY is not set in .env");
+    let secret_keys = load_key::keys();
+    let sercret_keys_data = web::Data::new(secret_keys.clone());
+
 
     // chatGPTのAPIkeyを設定
-    let mut client = ChatGPT::new(key).unwrap();
+    let mut client = ChatGPT::new(secret_keys.chagpt_api_key).unwrap();
     client.config.engine = chatgpt::config::ChatGPTEngine::Gpt35Turbo;
 
     let client_data = web::Data::new(client);
 
     let config = move |cfg: &mut ServiceConfig| {
-        cfg.app_data(analyzer_data.clone());
+        // cfg.app_data(analyzer_data.clone());
         cfg.app_data(client_data.clone());
         cfg.app_data(sercret_keys_data.clone());
         cfg.service(hello_world);
         cfg.service(health);
-        cfg.service(tokenize);
+        // cfg.service(tokenize);
         cfg.service(liejudge_chatgpt::lie_judge_gpt);
     };
 

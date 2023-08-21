@@ -4,3 +4,4 @@ Secrets*.toml
 /data
 /dict
 *.http
+api/shuttle/src/load_key.rs
