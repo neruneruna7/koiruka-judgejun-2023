@@ -37,7 +37,7 @@ pub fn json_get_text(
     });
 
     let out_file_path = "data/texts1.csv";
-    println!("{:?}", &texts);
+    // println!("{:?}", &texts);
 
     if let Err(err) = write_csv(texts, out_file_path) {
         eprintln!("Error writing CSV: {}", err);
