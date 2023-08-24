@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use actix_cors::Cors;
+use actix_web::middleware::Logger;
 use actix_web::{get, web, web::ServiceConfig};
 use actix_web::{post, HttpResponse, Responder};
 use lindera_analyzer::analyzer::Analyzer;
@@ -84,10 +86,11 @@ async fn fake_check(
 }
 
 #[shuttle_runtime::main]
-async fn actix_web(
-    // deploy時には有効にする
+async fn actix_web(// deploy時には有効にする
     // #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
 ) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+    // env_logger::init();
+
     // 形態素解析用の設定
     // let path = PathBuf::from(static_folder.join("lindera_ipadic_conf.json"));
     let path = PathBuf::from("static/lindera_ipadic_conf.json");
@@ -99,7 +102,6 @@ async fn actix_web(
 
     // dotenvy::from_path(static_folder.join(".env")).ok();
     dotenvy::from_path("static/.env").ok();
-
 
     // chatGPTのAPIkeyを.envから取得
     let gpt_key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
@@ -122,10 +124,20 @@ async fn actix_web(
         cfg.app_data(analyzer_data.clone())
             .app_data(client_data.clone())
             .app_data(sercret_keys_data.clone())
-            .service(hello_world)
-            .service(health)
-            .service(tokenize)
-            .service(fake_check);
+            .service(
+                web::scope("")
+                    .wrap(Logger::default())
+                    .wrap(
+                        Cors::default()
+                            .allow_any_origin()
+                            .allow_any_method()
+                            .allow_any_header(),
+                    )
+                    .service(hello_world)
+                    .service(health)
+                    .service(tokenize)
+                    .service(fake_check),
+            );
     };
 
     Ok(config.into())
