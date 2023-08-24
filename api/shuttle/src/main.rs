@@ -109,7 +109,7 @@ async fn actix_web(// deploy時には有効にする
 
     let secret_keys = SecretKeys {
         chagpt_api_key: gpt_key,
-        my_app_key: my_app_key,
+        my_app_key,
     };
 
     let sercret_keys_data = web::Data::new(secret_keys.clone());
