@@ -57,8 +57,10 @@ async fn health() -> &'static str {
 }
 
 #[get("/tokenize/{text}")]
-async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> impl Responder {
-    let tokens = analyzer.analyze(&mut text.into_inner()).unwrap(); // 形態素解析を実行します
+async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> actix_web::Result<impl Responder> {
+    let Ok(tokens) = analyzer.analyze(&mut text.into_inner()) else {
+        return Err(actix_web::error::ErrorBadRequest("Failed to tokenize"));
+    }; // 形態素解析を実行します
 
     let result_txt = tokens
         .iter()
@@ -66,7 +68,7 @@ async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> imp
         .collect::<Vec<String>>()
         .join("\n");
 
-    result_txt
+    Ok(HttpResponse::Ok().body(result_txt))
 }
 
 #[post("/fake_check")]
@@ -77,6 +79,11 @@ async fn fake_check(
 ) -> impl Responder {
     let chatgpt_response = liejudge_chatgpt::lie_judge_gpt(client, keys, req).await;
 
+    if let Err(e) = chatgpt_response {
+        eprintln!("{}", e);
+        return HttpResponse::InternalServerError().body(e.to_string());
+    }
+
     let fake_check_response = FakeCheckResponse {
         chatgpt_response: chatgpt_response.unwrap(),
         other_params: None,
@@ -86,22 +93,24 @@ async fn fake_check(
 }
 
 #[shuttle_runtime::main]
-async fn actix_web(// deploy時には有効にする
-    // #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
+async fn actix_web(
+    // deploy時には有効にする
+    #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
 ) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
     // env_logger::init();
 
     // 形態素解析用の設定
-    // let path = PathBuf::from(static_folder.join("lindera_ipadic_conf.json"));
-    let path = PathBuf::from("static/lindera_ipadic_conf.json");
+    let path = PathBuf::from(static_folder.join("lindera_ipadic_conf.json"));
+    // let path = PathBuf::from("static/lindera_ipadic_conf.json");
+
     let config_bytes = fs::read(path)?;
     let analyzer = Analyzer::from_slice(&config_bytes).unwrap();
     let analyzer_data = web::Data::new(analyzer);
 
     // ChatGPTの設定
 
-    // dotenvy::from_path(static_folder.join(".env")).ok();
-    dotenvy::from_path("static/.env").ok();
+    dotenvy::from_path(static_folder.join(".env")).ok();
+    // dotenvy::from_path("static/.env").ok();
 
     // chatGPTのAPIkeyを.envから取得
     let gpt_key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
@@ -116,7 +125,7 @@ async fn actix_web(// deploy時には有効にする
 
     // chatGPTのAPIkeyを設定
     let mut client = ChatGPT::new(secret_keys.chagpt_api_key).unwrap();
-    client.config.engine = chatgpt::config::ChatGPTEngine::Gpt35Turbo;
+    client.config.engine = chatgpt::config::ChatGPTEngine::Gpt4;
 
     let client_data = web::Data::new(client);
 
