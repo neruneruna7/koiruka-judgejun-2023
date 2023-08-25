@@ -128,7 +128,7 @@ async fn actix_web(
 
     // chatGPTのAPIkeyを設定
     let mut client = ChatGPT::new(secret_keys.chagpt_api_key).unwrap();
-    client.config.engine = chatgpt::config::ChatGPTEngine::Gpt4;
+    client.config.engine = chatgpt::config::ChatGPTEngine::Gpt35Turbo;
 
     let client_data = web::Data::new(client);
 
