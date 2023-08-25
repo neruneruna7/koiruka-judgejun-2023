@@ -6,7 +6,7 @@ use super::{ChatGptRequest, ChatGptResponse, SecretKeys};
 
 use actix_web::web;
 
-use anyhow::{anyhow, Result};
+use anyhow::anyhow;
 
 pub async fn lie_judge_gpt(
     client: web::Data<ChatGPT>,

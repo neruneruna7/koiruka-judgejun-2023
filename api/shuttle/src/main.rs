@@ -57,7 +57,10 @@ async fn health() -> &'static str {
 }
 
 #[get("/tokenize/{text}")]
-async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> actix_web::Result<impl Responder> {
+async fn tokenize(
+    text: web::Path<String>,
+    analyzer: web::Data<Analyzer>,
+) -> actix_web::Result<impl Responder> {
     let Ok(tokens) = analyzer.analyze(&mut text.into_inner()) else {
         return Err(actix_web::error::ErrorBadRequest("Failed to tokenize"));
     }; // 形態素解析を実行します
@@ -100,7 +103,7 @@ async fn actix_web(
     // env_logger::init();
 
     // 形態素解析用の設定
-    let path = PathBuf::from(static_folder.join("lindera_ipadic_conf.json"));
+    let path = static_folder.join("lindera_ipadic_conf.json");
     // let path = PathBuf::from("static/lindera_ipadic_conf.json");
 
     let config_bytes = fs::read(path)?;
