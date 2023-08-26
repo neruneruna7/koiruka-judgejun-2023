@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use actix_cors::Cors;
+use actix_web::middleware::Logger;
 use actix_web::{get, web, web::ServiceConfig};
 use actix_web::{post, HttpResponse, Responder};
 use lindera_analyzer::analyzer::Analyzer;
@@ -55,8 +57,13 @@ async fn health() -> &'static str {
 }
 
 #[get("/tokenize/{text}")]
-async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> impl Responder {
-    let tokens = analyzer.analyze(&mut text.into_inner()).unwrap(); // 形態素解析を実行します
+async fn tokenize(
+    text: web::Path<String>,
+    analyzer: web::Data<Analyzer>,
+) -> actix_web::Result<impl Responder> {
+    let Ok(tokens) = analyzer.analyze(&mut text.into_inner()) else {
+        return Err(actix_web::error::ErrorBadRequest("Failed to tokenize"));
+    }; // 形態素解析を実行します
 
     let result_txt = tokens
         .iter()
@@ -64,7 +71,7 @@ async fn tokenize(text: web::Path<String>, analyzer: web::Data<Analyzer>) -> imp
         .collect::<Vec<String>>()
         .join("\n");
 
-    result_txt
+    Ok(HttpResponse::Ok().body(result_txt))
 }
 
 #[post("/fake_check")]
@@ -74,6 +81,11 @@ async fn fake_check(
     req: web::Json<ChatGptRequest>,
 ) -> impl Responder {
     let chatgpt_response = liejudge_chatgpt::lie_judge_gpt(client, keys, req).await;
+
+    if let Err(e) = chatgpt_response {
+        eprintln!("{}", e);
+        return HttpResponse::InternalServerError().body(e.to_string());
+    }
 
     let fake_check_response = FakeCheckResponse {
         chatgpt_response: chatgpt_response.unwrap(),
@@ -86,20 +98,22 @@ async fn fake_check(
 #[shuttle_runtime::main]
 async fn actix_web(
     // deploy時には有効にする
-    // #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
+    #[shuttle_static_folder::StaticFolder(folder = "static")] static_folder: PathBuf,
 ) -> ShuttleActixWeb<impl FnOnce(&mut ServiceConfig) + Send + Clone + 'static> {
+    // env_logger::init();
+
     // 形態素解析用の設定
-    // let path = PathBuf::from(static_folder.join("lindera_ipadic_conf.json"));
-    let path = PathBuf::from("static/lindera_ipadic_conf.json");
+    let path = static_folder.join("lindera_ipadic_conf.json");
+    // let path = PathBuf::from("static/lindera_ipadic_conf.json");
+
     let config_bytes = fs::read(path)?;
     let analyzer = Analyzer::from_slice(&config_bytes).unwrap();
     let analyzer_data = web::Data::new(analyzer);
 
     // ChatGPTの設定
 
-    // dotenvy::from_path(static_folder.join(".env")).ok();
-    dotenvy::from_path("static/.env").ok();
-
+    dotenvy::from_path(static_folder.join(".env")).ok();
+    // dotenvy::from_path("static/.env").ok();
 
     // chatGPTのAPIkeyを.envから取得
     let gpt_key = env::var("CHATGPT_API_KEY").expect("CHATGPT_API_KEY is not set in .env");
@@ -107,7 +121,7 @@ async fn actix_web(
 
     let secret_keys = SecretKeys {
         chagpt_api_key: gpt_key,
-        my_app_key: my_app_key,
+        my_app_key,
     };
 
     let sercret_keys_data = web::Data::new(secret_keys.clone());
@@ -122,10 +136,20 @@ async fn actix_web(
         cfg.app_data(analyzer_data.clone())
             .app_data(client_data.clone())
             .app_data(sercret_keys_data.clone())
-            .service(hello_world)
-            .service(health)
-            .service(tokenize)
-            .service(fake_check);
+            .service(
+                web::scope("")
+                    .wrap(Logger::default())
+                    .wrap(
+                        Cors::default()
+                            .allow_any_origin()
+                            .allow_any_method()
+                            .allow_any_header(),
+                    )
+                    .service(hello_world)
+                    .service(health)
+                    .service(tokenize)
+                    .service(fake_check),
+            );
     };
 
     Ok(config.into())
